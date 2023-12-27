@@ -19,6 +19,7 @@
 	integrity="sha384-+sLIOodYLS7CIrQpBjl+C7nPvqq+FbNUBDunl/OZv93DB7Ln/533i8e/mZXLi/P+"
 	crossorigin="anonymous"
 ></script>
+<script src="/socket.io/socket.io.js"></script>
 
 <div class="container">
 	<br />
@@ -39,6 +40,7 @@
 </div>
 
 <script>
+	const socket = io();
 	$(() => {
 		$('#send').click(() => {
 			const message = { name: $('#name').val(), message: $('#message').val() };
@@ -46,14 +48,15 @@
 		});
 		getMessages();
 	});
-	function addMessages(message) {
+	socket.on('message', addMessage);
+	function addMessage(message) {
 		$('#messages').append(
 			`<h4> ${message.name} </h4> <p> ${message.message} </p>`
 		);
 	}
 	function getMessages() {
 		$.get('http://localhost:3000/messages', (data) => {
-			data.forEach(addMessages);
+			data.forEach(addMessage);
 		});
 	}
 	function postMessages(message) {
