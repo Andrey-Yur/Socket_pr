@@ -1,6 +1,5 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { log, error } = require('console');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
@@ -23,9 +22,11 @@ app.get('/messages', async (req, res) => {
 app.post('/messages', async (req, res) => {
 	const message = new Message(req.body);
 	const newMessage = await message.save();
-	if (!newMessage) sendStatus(500);
-	io.emit('message', req.body);
-	res.sendStatus(200);
+	const censored = await Message.findOneAndDelete({ message: 'badword' });
+	if (!censored) {
+		io.emit('message', req.body);
+		res.sendStatus(200);
+	}
 });
 
 io.on('connection', (socket) => {
@@ -35,9 +36,7 @@ io.on('connection', (socket) => {
 mongoose.connect(dbUrl).catch((error) => {
 	console.log('MongoDB connection', error);
 });
-// mongoose.connect(dbUrl, { useMongoClient: true }, (err) => {
-// 	console.log('MongoDB connection', err);
-// });
+
 const server = http.listen(3000, () => {
 	console.log('Server is listening on port', server.address().port);
 });
