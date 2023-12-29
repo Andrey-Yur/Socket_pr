@@ -19,13 +19,26 @@ app.get('/messages', async (req, res) => {
 	const messages = await Message.find({});
 	if (messages) res.send(messages);
 });
+app.get('/messages/:user', async (req, res) => {
+	const user = req.params.user;
+	const messages = await Message.find({ name: user });
+	if (messages) res.send(messages);
+});
 app.post('/messages', async (req, res) => {
-	const message = new Message(req.body);
-	const newMessage = await message.save();
-	const censored = await Message.findOneAndDelete({ message: 'badword' });
-	if (!censored) {
-		io.emit('message', req.body);
-		res.sendStatus(200);
+	try {
+		const message = new Message(req.body);
+		const newMessage = await message.save();
+		const censored = await Message.findOneAndDelete({ message: 'badword' });
+		if (!censored) {
+			io.emit('message', req.body);
+			res.sendStatus(200);
+		}
+	} catch (error) {
+		res.sendStatus(500);
+		return console.error(error);
+	} finally {
+		//logger.log('message post called)
+		console.log('Message post called');
 	}
 });
 
