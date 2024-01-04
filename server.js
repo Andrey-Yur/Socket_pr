@@ -1,14 +1,22 @@
-const express = require('express');
-const bodyParser = require('body-parser');
+import express from 'express';
+import pkg from 'body-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { mongoose } from 'mongoose';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+
 const app = express();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
-const mongoose = require('mongoose');
+const server = createServer(app);
+const io = new Server(server, { cors: { origin: '*' } });
+const { json, urlencoded } = pkg;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const dbUrl = 'mongodb://localhost:27017/message';
 
 app.use(express.static(__dirname));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(json());
+app.use(urlencoded({ extended: false }));
 
 const Message = mongoose.model('Message', {
 	name: String,
@@ -43,13 +51,13 @@ app.post('/messages', async (req, res) => {
 });
 
 io.on('connection', (socket) => {
-	console.log('user connected');
+	console.log(`Socket ${socket.id} connected`);
 });
 
 mongoose.connect(dbUrl).catch((error) => {
 	console.log('MongoDB connection', error);
 });
 
-const server = http.listen(3000, () => {
+server.listen(3000, () => {
 	console.log('Server is listening on port', server.address().port);
 });
